@@ -31,12 +31,6 @@ define( 'GF_DRIP_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
  * This function is called when Gravity Forms is loaded
  */
 function gf_drip_init() {
-	// Prevent multiple initializations
-	static $initialized = false;
-	if ( $initialized ) {
-		return;
-	}
-
 	// Check if Gravity Forms is installed and activated
 	if ( ! class_exists( 'GFForms' ) ) {
 		add_action( 'admin_notices', 'gf_drip_gravity_forms_required_notice' );
@@ -50,34 +44,25 @@ function gf_drip_init() {
 	}
 
 	// CRITICAL: Check if GFAddOn and GFFeedAddOn classes are available BEFORE requiring the class file
-	// GFFeedAddOn extends GFAddOn, so we need both
 	if ( ! class_exists( 'GFAddOn' ) || ! class_exists( 'GFFeedAddOn' ) ) {
-		// If we're on gform_loaded and classes aren't ready, they should be available soon
-		// Return and let Gravity Forms finish loading
 		return;
 	}
 
-	// Only proceed if we haven't already loaded the class
-	if ( class_exists( 'GF_Drip' ) ) {
-		$initialized = true;
-		return;
-	}
-
-	// Load the add-on class file ONLY after confirming parent class exists
+	// Load the add-on class file
 	$class_file = GF_DRIP_PLUGIN_DIR . 'class-gf-drip.php';
 	if ( ! file_exists( $class_file ) ) {
 		return;
 	}
 
+	// Only load if not already loaded
 	if ( ! class_exists( 'GF_Drip' ) ) {
 		require_once $class_file;
 	}
 
-	// Register the add-on - must use class name as string
-	if ( class_exists( 'GFAddOn' ) && class_exists( 'GF_Drip' ) ) {
-		// Register using the class name - this will create the instance
-		GFAddOn::register( 'GF_Drip' );
-		$initialized = true;
+	// Register the add-on using callback function instead of class name string
+	if ( class_exists( 'GF_Drip' ) ) {
+		// Try registration with callback
+		GFAddOn::register( array( 'GF_Drip', 'get_instance' ) );
 	}
 }
 

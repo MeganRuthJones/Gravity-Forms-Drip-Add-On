@@ -123,6 +123,16 @@ class GF_Drip extends GFFeedAddOn {
 	}
 
 	/**
+	 * Register this add-on with Gravity Forms
+	 * This is called automatically when the add-on is registered
+	 */
+	public static function register() {
+		if ( class_exists( 'GFAddOn' ) ) {
+			GFAddOn::register( 'GF_Drip' );
+		}
+	}
+
+	/**
 	 * Plugin starting point
 	 */
 	public function init() {
