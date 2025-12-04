@@ -12,7 +12,7 @@ if ( ! defined( 'WPINC' ) ) {
 	die;
 }
 
-// Only define the class if GFFeedAddOn is available
+// Only proceed if parent class exists - this check happens in main file before requiring
 if ( ! class_exists( 'GFFeedAddOn' ) ) {
 	return;
 }
@@ -649,4 +649,3 @@ class GF_Drip extends GFFeedAddOn {
 		return $sanitized;
 	}
 }
-
