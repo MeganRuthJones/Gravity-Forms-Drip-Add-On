@@ -75,6 +75,18 @@ class GF_Drip extends GFFeedAddOn {
 	protected $_short_title = 'Drip';
 
 	/**
+	 * Constructor - set up the add-on
+	 */
+	public function __construct() {
+		// Set the plugin path dynamically
+		if ( empty( $this->_path ) && defined( 'GF_DRIP_PLUGIN_FILE' ) ) {
+			$this->_path = plugin_basename( GF_DRIP_PLUGIN_FILE );
+		}
+		
+		parent::__construct();
+	}
+
+	/**
 	 * Capabilities required to access plugin settings
 	 *
 	 * @var string
@@ -128,11 +140,6 @@ class GF_Drip extends GFFeedAddOn {
 	 */
 	public function init() {
 		parent::init();
-
-		// Set the plugin path dynamically if not already set
-		if ( empty( $this->_path ) ) {
-			$this->_path = plugin_basename( GF_DRIP_PLUGIN_FILE );
-		}
 
 		// Add AJAX handlers
 		add_action( 'wp_ajax_gf_drip_test_connection', array( $this, 'ajax_test_connection' ) );
