@@ -59,10 +59,15 @@ function gf_drip_init() {
 		require_once $class_file;
 	}
 
-	// Register the add-on using callback function instead of class name string
-	if ( class_exists( 'GF_Drip' ) ) {
-		// Try registration with callback
-		GFAddOn::register( array( 'GF_Drip', 'get_instance' ) );
+	// Register the add-on - ensure instance is created first
+	if ( class_exists( 'GF_Drip' ) && class_exists( 'GFAddOn' ) ) {
+		// First, get the instance to ensure the class is properly instantiated
+		$instance = GF_Drip::get_instance();
+		
+		// Then register using the class name string (standard method)
+		if ( $instance && method_exists( 'GFAddOn', 'register' ) ) {
+			GFAddOn::register( 'GF_Drip' );
+		}
 	}
 }
 

@@ -54,11 +54,11 @@ class GF_Drip extends GFFeedAddOn {
 	protected $_path = 'drip-main/drip-gravity-forms.php';
 
 	/**
-	 * Full path to this file
+	 * Full path to the main plugin file (not this class file)
 	 *
 	 * @var string
 	 */
-	protected $_full_path = __FILE__;
+	protected $_full_path = '';
 
 	/**
 	 * Title of the plugin
@@ -127,6 +127,11 @@ class GF_Drip extends GFFeedAddOn {
 	 * Plugin starting point
 	 */
 	public function init() {
+		// Set full path to main plugin file if not set
+		if ( empty( $this->_full_path ) && defined( 'GF_DRIP_PLUGIN_FILE' ) ) {
+			$this->_full_path = GF_DRIP_PLUGIN_FILE;
+		}
+
 		parent::init();
 
 		// Add AJAX handlers
