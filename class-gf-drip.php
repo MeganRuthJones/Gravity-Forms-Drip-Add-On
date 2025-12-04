@@ -40,10 +40,11 @@ class GF_Drip extends GFFeedAddOn {
 
 	/**
 	 * Plugin slug
+	 * Should match the plugin folder name for consistency
 	 *
 	 * @var string
 	 */
-	protected $_slug = 'gravityforms-drip';
+	protected $_slug = 'drip';
 
 	/**
 	 * Plugin path (relative to plugins folder)
