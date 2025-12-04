@@ -36,15 +36,22 @@ function gf_drip_init() {
 		return;
 	}
 
-	// Check Gravity Forms version
-	if ( ! version_compare( GFCommon::$version, GF_DRIP_MIN_GF_VERSION, '>=' ) ) {
+	// Check if GFCommon class exists and check Gravity Forms version
+	if ( class_exists( 'GFCommon' ) && ! version_compare( GFCommon::$version, GF_DRIP_MIN_GF_VERSION, '>=' ) ) {
 		add_action( 'admin_notices', 'gf_drip_gravity_forms_version_notice' );
 		return;
 	}
 
-	// Load the add-on
-	require_once GF_DRIP_PLUGIN_DIR . 'class-gf-drip.php';
-	GFAddOn::register( 'GF_Drip' );
+	// Load the add-on class file
+	$class_file = GF_DRIP_PLUGIN_DIR . 'class-gf-drip.php';
+	if ( file_exists( $class_file ) ) {
+		require_once $class_file;
+		
+		// Register the add-on
+		if ( class_exists( 'GFAddOn' ) && class_exists( 'GF_Drip' ) ) {
+			GFAddOn::register( 'GF_Drip' );
+		}
+	}
 }
 add_action( 'gform_loaded', 'gf_drip_init', 5 );
 
@@ -63,6 +70,7 @@ function gf_drip_gravity_forms_required_notice() {
  * Display notice if Gravity Forms version is too old
  */
 function gf_drip_gravity_forms_version_notice() {
+	$current_version = class_exists( 'GFCommon' ) && isset( GFCommon::$version ) ? GFCommon::$version : 'Unknown';
 	?>
 	<div class="notice notice-error">
 		<p>
@@ -71,7 +79,7 @@ function gf_drip_gravity_forms_version_notice() {
 				/* translators: 1: Minimum required version, 2: Current version */
 				esc_html__( 'Gravity Forms Drip Add-On requires Gravity Forms version %1$s or higher. You are running version %2$s.', 'gravityforms-drip' ),
 				esc_html( GF_DRIP_MIN_GF_VERSION ),
-				esc_html( GFCommon::$version )
+				esc_html( $current_version )
 			);
 			?>
 		</p>

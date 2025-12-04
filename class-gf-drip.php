@@ -71,30 +71,30 @@ class GF_Drip extends GFFeedAddOn {
 	/**
 	 * Capabilities required to access plugin settings
 	 *
-	 * @var array
+	 * @var string
 	 */
-	protected $_capabilities_settings_page = 'gravityforms_drip';
+	protected $_capabilities_settings_page = 'gravityforms_edit_settings';
 
 	/**
 	 * Capabilities required to access plugin form settings
 	 *
-	 * @var array
+	 * @var string
 	 */
-	protected $_capabilities_form_settings = 'gravityforms_drip';
+	protected $_capabilities_form_settings = 'gravityforms_edit_forms';
 
 	/**
 	 * Capabilities required to uninstall plugin
 	 *
-	 * @var array
+	 * @var string
 	 */
-	protected $_capabilities_uninstall = 'gravityforms_drip_uninstall';
+	protected $_capabilities_uninstall = 'gravityforms_uninstall';
 
 	/**
 	 * Permissions required to access plugin
 	 *
-	 * @var string
+	 * @var array
 	 */
-	protected $_capabilities = array( 'gravityforms_drip', 'gravityforms_drip_uninstall' );
+	protected $_capabilities = array( 'gravityforms_edit_forms', 'gravityforms_edit_settings' );
 
 	/**
 	 * Singleton instance
