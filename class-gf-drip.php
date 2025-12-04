@@ -47,11 +47,11 @@ class GF_Drip extends GFFeedAddOn {
 
 	/**
 	 * Plugin path (relative to plugins folder)
-	 * Auto-detect from the main plugin file
+	 * Must match the actual plugin folder name
 	 *
 	 * @var string
 	 */
-	protected $_path = '';
+	protected $_path = 'drip-main/drip-gravity-forms.php';
 
 	/**
 	 * Full path to this file
@@ -73,18 +73,6 @@ class GF_Drip extends GFFeedAddOn {
 	 * @var string
 	 */
 	protected $_short_title = 'Drip';
-
-	/**
-	 * Constructor - set up the add-on
-	 */
-	public function __construct() {
-		// Set the plugin path dynamically
-		if ( empty( $this->_path ) && defined( 'GF_DRIP_PLUGIN_FILE' ) ) {
-			$this->_path = plugin_basename( GF_DRIP_PLUGIN_FILE );
-		}
-		
-		parent::__construct();
-	}
 
 	/**
 	 * Capabilities required to access plugin settings

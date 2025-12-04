@@ -28,6 +28,7 @@ define( 'GF_DRIP_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 
 /**
  * Initialize the plugin
+ * This function is called when Gravity Forms is loaded
  */
 function gf_drip_init() {
 	// Prevent multiple initializations
@@ -51,14 +52,8 @@ function gf_drip_init() {
 	// CRITICAL: Check if GFAddOn and GFFeedAddOn classes are available BEFORE requiring the class file
 	// GFFeedAddOn extends GFAddOn, so we need both
 	if ( ! class_exists( 'GFAddOn' ) || ! class_exists( 'GFFeedAddOn' ) ) {
-		// If we're on gform_loaded hook, try again on init as fallback
-		if ( did_action( 'gform_loaded' ) && ! did_action( 'init' ) ) {
-			return; // Will be handled by init hook
-		}
-		// If we're on init and still no GFFeedAddOn, show notice
-		if ( did_action( 'init' ) ) {
-			add_action( 'admin_notices', 'gf_drip_feed_addon_not_found_notice' );
-		}
+		// Try again later if classes aren't ready yet
+		add_action( 'plugins_loaded', 'gf_drip_init', 20 );
 		return;
 	}
 
@@ -70,17 +65,22 @@ function gf_drip_init() {
 
 	// Load the add-on class file ONLY after confirming parent class exists
 	$class_file = GF_DRIP_PLUGIN_DIR . 'class-gf-drip.php';
-	if ( file_exists( $class_file ) && ! class_exists( 'GF_Drip' ) ) {
+	if ( ! file_exists( $class_file ) ) {
+		return;
+	}
+
+	if ( ! class_exists( 'GF_Drip' ) ) {
 		require_once $class_file;
-		
-		// Register the add-on - must use class name as string
-		if ( class_exists( 'GFAddOn' ) && class_exists( 'GF_Drip' ) ) {
-			// Register using the class name - this will create the instance
-			GFAddOn::register( 'GF_Drip' );
-			$initialized = true;
-		}
+	}
+
+	// Register the add-on - must use class name as string
+	if ( class_exists( 'GFAddOn' ) && class_exists( 'GF_Drip' ) ) {
+		// Register using the class name - this will create the instance
+		GFAddOn::register( 'GF_Drip' );
+		$initialized = true;
 	}
 }
+
 // Use gform_loaded hook - this is the standard hook for Gravity Forms add-ons
 // Priority 5 ensures it loads early but after Gravity Forms core
 add_action( 'gform_loaded', 'gf_drip_init', 5 );
