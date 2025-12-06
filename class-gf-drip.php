@@ -396,24 +396,29 @@ class GF_Drip extends GFFeedAddOn {
 		</style>';
 
 		// Add JavaScript for AJAX test
+		$connected_text = esc_js( __( 'Connected', 'gravityforms-drip' ) );
+		$connecting_text = esc_js( __( 'Connecting...', 'gravityforms-drip' ) );
+		$connect_text = esc_js( __( 'Connect', 'gravityforms-drip' ) );
+		$error_text = esc_js( __( 'An error occurred while connecting.', 'gravityforms-drip' ) );
+		
 		$html .= '<script type="text/javascript">
 			jQuery(document).ready(function($) {
 				// Update button state on page load if connected
 				var isConnected = ' . ( $is_connected ? 'true' : 'false' ) . ';
 				if (isConnected) {
-					$("#gf_drip_test_connection").addClass("gf-drip-connected").text("' . esc_js( __( 'Connected', 'gravityforms-drip' ) ) . '");
+					$("#gf_drip_test_connection").addClass("gf-drip-connected").text("' . $connected_text . '");
 				}
 				
 				$("#gf_drip_test_connection").on("click", function() {
 					var $button = $(this);
 					var $result = $("#gf_drip_test_result");
 					
-					// Don't allow clicking if already connected (unless they want to test again)
+					// Don\'t allow clicking if already connected (unless they want to test again)
 					if ($button.hasClass("gf-drip-connected")) {
 						return;
 					}
 					
-					$button.prop("disabled", true).text("' . esc_js( __( 'Connecting...', 'gravityforms-drip' ) ) . '");
+					$button.prop("disabled", true).text("' . $connecting_text . '");
 					$result.html("");
 					
 					$.ajax({
@@ -427,19 +432,19 @@ class GF_Drip extends GFFeedAddOn {
 						},
 						success: function(response) {
 							if (response.success) {
-								$button.removeClass("button-secondary").addClass("gf-drip-connected").text("' . esc_js( __( 'Connected', 'gravityforms-drip' ) ) . '");
+								$button.removeClass("button-secondary").addClass("gf-drip-connected").text("' . $connected_text . '");
 								$result.html("<div class=\'notice notice-success inline\'><p>" + response.data.message + "</p></div>");
 							} else {
 								$result.html("<div class=\'notice notice-error inline\'><p>" + response.data.message + "</p></div>");
 							}
 						},
 						error: function() {
-							$result.html("<div class=\'notice notice-error inline\'><p>' . esc_js( __( 'An error occurred while connecting.', 'gravityforms-drip' ) ) . '</p></div>");
+							$result.html("<div class=\'notice notice-error inline\'><p>' . $error_text . '</p></div>");
 						},
 						complete: function() {
 							$button.prop("disabled", false);
 							if (!$button.hasClass("gf-drip-connected")) {
-								$button.text("' . esc_js( __( 'Connect', 'gravityforms-drip' ) ) . '");
+								$button.text("' . $connect_text . '");
 							}
 						}
 					});
@@ -447,7 +452,7 @@ class GF_Drip extends GFFeedAddOn {
 				
 				// Reset connection state if API token or account ID changes
 				$("#api_token, #account_id").on("change", function() {
-					$("#gf_drip_test_connection").removeClass("gf-drip-connected").text("' . esc_js( __( 'Connect', 'gravityforms-drip' ) ) . '");
+					$("#gf_drip_test_connection").removeClass("gf-drip-connected").text("' . $connect_text . '");
 				});
 			});
 		</script>';
