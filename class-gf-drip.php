@@ -138,9 +138,6 @@ class GF_Drip extends GFFeedAddOn {
 	 */
 	public function init() {
 		parent::init();
-
-		// Add AJAX handlers
-		add_action( 'wp_ajax_gf_drip_test_connection', array( $this, 'ajax_test_connection' ) );
 	}
 
 	/**
@@ -186,34 +183,28 @@ class GF_Drip extends GFFeedAddOn {
 			array(
 				'title'  => esc_html__( 'Drip API Settings', 'gravityforms-drip' ),
 				'fields' => array(
-					array(
-						'name'              => 'api_token',
-						'label'             => esc_html__( 'API Token', 'gravityforms-drip' ),
-						'type'              => 'text',
-						'class'             => 'medium',
-						'required'          => true,
-						'feedback_callback' => array( $this, 'is_valid_api_token' ),
-						'description'       => sprintf(
-							/* translators: %s: Link to Drip API documentation */
-							esc_html__( 'Enter your Drip API token. You can find this in your Drip account under Settings > User Settings > API Token. %s', 'gravityforms-drip' ),
-							'<a href="https://www.getdrip.com/user/edit" target="_blank">' . esc_html__( 'Get your API token', 'gravityforms-drip' ) . '</a>'
-						),
+				array(
+					'name'              => 'api_token',
+					'label'             => esc_html__( 'API Token', 'gravityforms-drip' ),
+					'type'              => 'text',
+					'class'             => 'medium',
+					'required'          => true,
+					'feedback_callback' => array( $this, 'validate_api_connection' ),
+					'description'       => sprintf(
+						/* translators: %s: Link to Drip API documentation */
+						esc_html__( 'Enter your Drip API token. You can find this in your Drip account under Settings > User Settings > API Token. %s', 'gravityforms-drip' ),
+						'<a href="https://www.getdrip.com/user/edit" target="_blank">' . esc_html__( 'Get your API token', 'gravityforms-drip' ) . '</a>'
 					),
-					array(
-						'name'              => 'account_id',
-						'label'             => esc_html__( 'Account ID', 'gravityforms-drip' ),
-						'type'              => 'text',
-						'class'             => 'medium',
-						'required'          => true,
-						'feedback_callback' => array( $this, 'is_valid_account_id' ),
-						'description'       => esc_html__( 'Enter your Drip Account ID. You can find this in your Drip account URL (e.g., https://www.getdrip.com/{account_id}/).', 'gravityforms-drip' ),
-					),
-					array(
-						'name'        => 'test_connection',
-						'type'        => 'test_connection',
-						'label'       => esc_html__( 'Connect', 'gravityforms-drip' ),
-						'description' => esc_html__( 'Click the button below to connect to Drip.', 'gravityforms-drip' ),
-					),
+				),
+				array(
+					'name'              => 'account_id',
+					'label'             => esc_html__( 'Account ID', 'gravityforms-drip' ),
+					'type'              => 'text',
+					'class'             => 'medium',
+					'required'          => true,
+					'feedback_callback' => array( $this, 'validate_api_connection' ),
+					'description'       => esc_html__( 'Enter your Drip Account ID. You can find this in your Drip account URL (e.g., https://www.getdrip.com/{account_id}/).', 'gravityforms-drip' ),
+				),
 				),
 			),
 		);
@@ -351,118 +342,6 @@ class GF_Drip extends GFFeedAddOn {
 		);
 	}
 
-	/**
-	 * Render test connection field
-	 *
-	 * @param array $field Field configuration
-	 * @param bool  $echo  Whether to echo the output
-	 * @return string
-	 */
-	public function settings_test_connection( $field, $echo = true ) {
-		// Check if connection is already established
-		$is_connected = get_transient( 'gf_drip_connection_status' );
-		$api_token = $this->get_plugin_setting( 'api_token' );
-		$account_id = $this->get_plugin_setting( 'account_id' );
-		
-		// If credentials exist and connection was successful, show connected state
-		$button_text = esc_html__( 'Connect', 'gravityforms-drip' );
-		$button_class = 'button button-secondary';
-		
-		if ( $is_connected && ! empty( $api_token ) && ! empty( $account_id ) ) {
-			$button_text = esc_html__( 'Connected', 'gravityforms-drip' );
-			$button_class = 'button button-secondary' . ' gf-drip-connected';
-		}
-
-		$html = sprintf(
-			'<button type="button" id="gf_drip_test_connection" class="%s">%s</button>',
-			esc_attr( $button_class ),
-			$button_text
-		);
-
-		$html .= '<div id="gf_drip_test_result" style="margin-top: 10px;"></div>';
-
-		// Add CSS for connected state
-		$html .= '<style>
-			.gf-drip-connected {
-				background-color: #00a32a !important;
-				border-color: #00a32a !important;
-				color: #fff !important;
-			}
-			.gf-drip-connected:hover {
-				background-color: #008a20 !important;
-				border-color: #008a20 !important;
-				color: #fff !important;
-			}
-		</style>';
-
-		// Add JavaScript for AJAX test
-		$connected_text = esc_js( __( 'Connected', 'gravityforms-drip' ) );
-		$connecting_text = esc_js( __( 'Connecting...', 'gravityforms-drip' ) );
-		$connect_text = esc_js( __( 'Connect', 'gravityforms-drip' ) );
-		$error_text = esc_js( __( 'An error occurred while connecting.', 'gravityforms-drip' ) );
-		
-		$html .= '<script type="text/javascript">
-			jQuery(document).ready(function($) {
-				// Update button state on page load if connected
-				var isConnected = ' . ( $is_connected ? 'true' : 'false' ) . ';
-				if (isConnected) {
-					$("#gf_drip_test_connection").addClass("gf-drip-connected").text("' . $connected_text . '");
-				}
-				
-				$("#gf_drip_test_connection").on("click", function() {
-					var $button = $(this);
-					var $result = $("#gf_drip_test_result");
-					
-					// Don\'t allow clicking if already connected (unless they want to test again)
-					if ($button.hasClass("gf-drip-connected")) {
-						return;
-					}
-					
-					$button.prop("disabled", true).text("' . $connecting_text . '");
-					$result.html("");
-					
-					$.ajax({
-						url: ajaxurl,
-						type: "POST",
-						data: {
-							action: "gf_drip_test_connection",
-							api_token: $("#api_token").val(),
-							account_id: $("#account_id").val(),
-							nonce: "' . wp_create_nonce( 'gf_drip_test_connection' ) . '"
-						},
-						success: function(response) {
-							if (response.success) {
-								$button.removeClass("button-secondary").addClass("gf-drip-connected").text("' . $connected_text . '");
-								$result.html("<div class=\'notice notice-success inline\'><p>" + response.data.message + "</p></div>");
-							} else {
-								$result.html("<div class=\'notice notice-error inline\'><p>" + response.data.message + "</p></div>");
-							}
-						},
-						error: function() {
-							$result.html("<div class=\'notice notice-error inline\'><p>' . $error_text . '</p></div>");
-						},
-						complete: function() {
-							$button.prop("disabled", false);
-							if (!$button.hasClass("gf-drip-connected")) {
-								$button.text("' . $connect_text . '");
-							}
-						}
-					});
-				});
-				
-				// Reset connection state if API token or account ID changes
-				$("#api_token, #account_id").on("change", function() {
-					$("#gf_drip_test_connection").removeClass("gf-drip-connected").text("' . $connect_text . '");
-				});
-			});
-		</script>';
-
-		if ( $echo ) {
-			echo $html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
-		}
-
-		return $html;
-	}
 
 	/**
 	 * AJAX handler for testing connection
@@ -552,23 +431,32 @@ class GF_Drip extends GFFeedAddOn {
 	}
 
 	/**
-	 * Check if API token is valid
+	 * Validate API connection when settings are saved
+	 * This is used as feedback_callback for both api_token and account_id fields
+	 * Shows green tick if connected, red tick if error, no tick if not tested yet
 	 *
-	 * @param string $value API token value
-	 * @return bool
+	 * @param string $value Field value
+	 * @return bool|null True if connection is valid, false on failure, null if not tested
 	 */
-	public function is_valid_api_token( $value ) {
-		return ! empty( $value ) && strlen( $value ) > 10;
-	}
-
-	/**
-	 * Check if Account ID is valid
-	 *
-	 * @param string $value Account ID value
-	 * @return bool
-	 */
-	public function is_valid_account_id( $value ) {
-		return ! empty( $value );
+	public function validate_api_connection( $value ) {
+		// Check if we have a connection status from the last save
+		$is_connected = get_transient( 'gf_drip_connection_status' );
+		$connection_error = get_transient( 'gf_drip_connection_error' );
+		
+		// If we have saved credentials, show their status
+		$api_token = $this->get_plugin_setting( 'api_token' );
+		$account_id = $this->get_plugin_setting( 'account_id' );
+		
+		if ( ! empty( $api_token ) && ! empty( $account_id ) ) {
+			if ( $is_connected ) {
+				return true; // Show green tick
+			} elseif ( $connection_error ) {
+				return false; // Show red tick
+			}
+		}
+		
+		// No status yet - return null to show no feedback
+		return null;
 	}
 
 	/**
@@ -823,6 +711,29 @@ class GF_Drip extends GFFeedAddOn {
 		// Sanitize Account ID
 		if ( isset( $sanitized['account_id'] ) ) {
 			$sanitized['account_id'] = sanitize_text_field( $sanitized['account_id'] );
+		}
+
+		// Test connection when both fields are present and have values
+		if ( ! empty( $sanitized['api_token'] ) && ! empty( $sanitized['account_id'] ) ) {
+			// Test with the sanitized values (the new values being saved)
+			$connection_result = $this->test_api_connection( $sanitized['api_token'], $sanitized['account_id'] );
+			
+			if ( is_wp_error( $connection_result ) ) {
+				// Set field errors to display the error message
+				$this->set_field_error( 'api_token', $connection_result->get_error_message() );
+				$this->set_field_error( 'account_id', $connection_result->get_error_message() );
+				delete_transient( 'gf_drip_connection_status' );
+				delete_transient( 'gf_drip_connection_error' );
+				set_transient( 'gf_drip_connection_error', $connection_result->get_error_message(), 300 ); // Store error for 5 minutes
+			} else {
+				// Connection successful
+				set_transient( 'gf_drip_connection_status', true, HOUR_IN_SECONDS );
+				delete_transient( 'gf_drip_connection_error' );
+			}
+		} else {
+			// Clear connection status if credentials are missing
+			delete_transient( 'gf_drip_connection_status' );
+			delete_transient( 'gf_drip_connection_error' );
 		}
 
 		return $sanitized;
