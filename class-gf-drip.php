@@ -695,6 +695,30 @@ class GF_Drip extends GFFeedAddOn {
 	}
 
 	/**
+	 * Check if user can create a new feed
+	 * Only allow creating new feeds if at least one feed already exists
+	 *
+	 * @param int $form_id Form ID
+	 * @return bool
+	 */
+	public function can_create_feed( $form_id = 0 ) {
+		// Get current form ID if not provided
+		if ( empty( $form_id ) ) {
+			$form_id = rgget( 'id' );
+		}
+
+		if ( empty( $form_id ) ) {
+			return false;
+		}
+
+		// Get existing feeds for this form
+		$feeds = $this->get_feeds( $form_id );
+
+		// Only allow creating new feeds if at least one feed exists
+		return ! empty( $feeds ) && count( $feeds ) > 0;
+	}
+
+	/**
 	 * Sanitize plugin settings
 	 *
 	 * @param array $settings Settings to sanitize
