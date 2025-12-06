@@ -697,6 +697,7 @@ class GF_Drip extends GFFeedAddOn {
 	/**
 	 * Check if user can create a new feed
 	 * Only allow creating new feeds if at least one feed already exists
+	 * But always allow the first feed if settings are configured
 	 *
 	 * @param int $form_id Form ID
 	 * @return bool
@@ -711,11 +712,27 @@ class GF_Drip extends GFFeedAddOn {
 			return false;
 		}
 
+		// Check if settings are configured
+		$api_token = $this->get_plugin_setting( 'api_token' );
+		$account_id = $this->get_plugin_setting( 'account_id' );
+		
+		// If settings are not configured, don't allow feed creation
+		if ( empty( $api_token ) || empty( $account_id ) ) {
+			return false;
+		}
+
 		// Get existing feeds for this form
 		$feeds = $this->get_feeds( $form_id );
 
-		// Only allow creating new feeds if at least one feed exists
-		return ! empty( $feeds ) && count( $feeds ) > 0;
+		// Allow creating the first feed if settings are configured
+		// Only allow creating additional feeds if at least one feed already exists
+		if ( empty( $feeds ) || count( $feeds ) === 0 ) {
+			// First feed - allow if settings are configured
+			return true;
+		}
+
+		// Additional feeds - only allow if at least one feed exists
+		return count( $feeds ) > 0;
 	}
 
 	/**
