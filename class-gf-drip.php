@@ -452,13 +452,17 @@ class GF_Drip extends GFFeedAddOn {
 		$response_code = wp_remote_retrieve_response_code( $response );
 		$response_body = wp_remote_retrieve_body( $response );
 
+		$this->log_debug( 'Drip API response code: ' . $response_code );
+
 		if ( 200 !== $response_code ) {
 			$error_data = json_decode( $response_body, true );
 			$error_message = isset( $error_data['errors'][0]['message'] ) ? $error_data['errors'][0]['message'] : esc_html__( 'Invalid API credentials.', 'gravityforms-drip' );
 			$this->log_error( 'API connection test failed: HTTP ' . $response_code . ' - ' . $error_message );
+			$this->log_error( 'Response body: ' . substr( $response_body, 0, 500 ) ); // Log first 500 chars
 			return new WP_Error( 'invalid_credentials', $error_message );
 		}
 
+		$this->log_debug( 'Drip API connection test successful!' );
 		return true;
 	}
 
