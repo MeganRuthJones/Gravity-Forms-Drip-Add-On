@@ -712,6 +712,13 @@ class GF_Drip extends GFFeedAddOn {
 			return false;
 		}
 
+		// Get existing feeds for this form
+		$feeds = $this->get_feeds( $form_id );
+
+		// Only allow creating new feeds if at least one feed already exists
+		return ! empty( $feeds ) && count( $feeds ) > 0;
+		
+		/* COMMENTED OUT - Fix to allow first feed when settings are configured
 		// Check if settings are configured
 		$api_token = $this->get_plugin_setting( 'api_token' );
 		$account_id = $this->get_plugin_setting( 'account_id' );
@@ -733,6 +740,7 @@ class GF_Drip extends GFFeedAddOn {
 
 		// Additional feeds - only allow if at least one feed exists
 		return count( $feeds ) > 0;
+		*/
 	}
 
 	/**
