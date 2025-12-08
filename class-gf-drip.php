@@ -427,7 +427,10 @@ class GF_Drip extends GFFeedAddOn {
 		}
 
 		// Test by fetching account info
-		$url = sprintf( 'https://api.getdrip.com/v2/%s/accounts', $account_id );
+		// Drip API v2: GET /accounts/{account_id} to verify account access
+		$url = sprintf( 'https://api.getdrip.com/v2/accounts/%s', sanitize_text_field( $account_id ) );
+		
+		$this->log_debug( 'Testing Drip API connection to: ' . $url );
 
 		$response = wp_remote_get(
 			$url,
@@ -797,17 +800,25 @@ class GF_Drip extends GFFeedAddOn {
 		// Test connection when both fields are present and have values
 		if ( ! empty( $sanitized['api_token'] ) && ! empty( $sanitized['account_id'] ) ) {
 			// Test with the sanitized values (the new values being saved)
+			$this->log_debug( 'Testing Drip API connection with provided credentials...' );
 			$connection_result = $this->test_api_connection( $sanitized['api_token'], $sanitized['account_id'] );
 			
 			if ( is_wp_error( $connection_result ) ) {
+				// Connection failed
+				$error_message = $connection_result->get_error_message();
+				$this->log_error( 'Drip API connection test failed: ' . $error_message );
+				
 				// Set field errors to display the error message
-				$this->set_field_error( 'api_token', $connection_result->get_error_message() );
-				$this->set_field_error( 'account_id', $connection_result->get_error_message() );
+				$this->set_field_error( 'api_token', $error_message );
+				$this->set_field_error( 'account_id', $error_message );
+				
+				// Store error status
 				delete_transient( 'gf_drip_connection_status' );
 				delete_transient( 'gf_drip_connection_error' );
-				set_transient( 'gf_drip_connection_error', $connection_result->get_error_message(), 300 ); // Store error for 5 minutes
+				set_transient( 'gf_drip_connection_error', $error_message, 300 ); // Store error for 5 minutes
 			} else {
 				// Connection successful
+				$this->log_debug( 'Drip API connection test successful!' );
 				set_transient( 'gf_drip_connection_status', true, HOUR_IN_SECONDS );
 				delete_transient( 'gf_drip_connection_error' );
 			}
